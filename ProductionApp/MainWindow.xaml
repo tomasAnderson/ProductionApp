@@ -1,0 +1,163 @@
+﻿<Window x:Class="ProductionApp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:sys="clr-namespace:System;assembly=mscorlib"
+        xmlns:local="clr-namespace:ProductionApp" 
+        xmlns:local1="clr-namespace:ProductionApp.Classes"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="750" Width="1000">
+    <Window.Resources>
+        <ObjectDataProvider x:Key="dataFromEnum" MethodName="GetValues"
+                        ObjectType="{x:Type sys:Enum}">
+            <ObjectDataProvider.MethodParameters>
+                <x:Type TypeName="local:Gender"/>
+            </ObjectDataProvider.MethodParameters>
+        </ObjectDataProvider>
+        <local1:EnumConverter x:Key="EnumConverter"/>
+        <local1:ParamsConverter x:Key="ParamsConverter"/>
+        <local1:StringConverter x:Key="StringConverter"/>
+    </Window.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="0.14*"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="0.14*"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="0.5*"/>
+        </Grid.ColumnDefinitions>
+
+        <Label Grid.Row="0" Content="Employees:" FontSize="14" Foreground="Red"/>
+        <DataGrid x:Name="employees_DataGrid" ItemsSource="{Binding PublicEmployees}" AutoGenerateColumns="False" Grid.Row="1" IsReadOnly="True" MouseEnter="employees_DataGrid_MouseEnter">
+            <DataGrid.Columns>
+                <DataGridTextColumn Binding="{Binding Path=ID}"          Header="ID" FontSize="15"/>
+                <DataGridTextColumn Binding="{Binding Path=LastName}"    Header="LastName" FontSize="15" Width="*"/>
+                <DataGridTextColumn Binding="{Binding Path=Name}"        Header="Name" FontSize="15"/>
+                <DataGridTextColumn Binding="{Binding Path=SecondName}"  Header="SecondName" FontSize="15" Width="*"/>
+                <DataGridTemplateColumn IsReadOnly="True"                Header="BirthDate">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <DatePicker SelectedDate="{Binding Path=BirthDate}" Focusable="False" IsHitTestVisible="False" FontSize="15"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTextColumn Binding="{Binding Path=Genders, Converter={StaticResource ResourceKey=EnumConverter}}" Header="Gender" FontSize="15"/>
+                <DataGridTextColumn Binding="{Binding Path=Subdivision.Name, Converter={StaticResource StringConverter}}" Header="Subdivision" FontSize="15" x:Name="SubCol"/>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <Label Grid.Row="2" Content="Subdivisions:" FontSize="14" Foreground="Red"/>
+        <DataGrid x:Name="subdivisions_DataGrid" ItemsSource="{Binding PublicSubdivisions}" AutoGenerateColumns="False" Grid.Row="3" IsReadOnly="True" MouseEnter="subdivisions_DataGrid_MouseEnter">
+            <DataGrid.Columns>
+                <DataGridTextColumn Binding="{Binding Path=ID}" Header="ID" FontSize="20"/>
+                <DataGridTextColumn Binding="{Binding Path=Name}" Header="Name" FontSize="20" Width="*"/>
+                <DataGridTextColumn Binding="{Binding Path=Employee.LastName, Converter={StaticResource StringConverter}}"
+                                    Header="Leader" FontSize="20" Width="*"/>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <StackPanel Grid.Row="1" Grid.Column="1">
+            <TextBox x:Name="employeesID_TextBox" Text="{Binding ElementName=employees_DataGrid, Path=SelectedItem.ID, Mode=OneWay}" Height="25" Width="100" Margin="5" IsReadOnly="True"/>
+            <TextBox x:Name="employeesLastName_TextBox" Text="{Binding ElementName=employees_DataGrid, Path=SelectedItem.LastName, Mode=OneWay}" Width="200" Height="25" Margin="5"/>
+            <TextBox x:Name="employeesName_TextBox" Text="{Binding ElementName=employees_DataGrid, Path=SelectedItem.Name, Mode=OneWay}" Width="200" Height="25" Margin="5"/>
+            <TextBox x:Name="employeesSecondName_TextBox" Text="{Binding ElementName=employees_DataGrid, Path=SelectedItem.SecondName, Mode=OneWay}" Width="200" Height="25" Margin="5"/>
+            <DatePicker x:Name="employeesBirthDate_TextBox" Width="200" Height="25" Margin="5" 
+                        SelectedDate="{Binding ElementName=employees_DataGrid, Path=SelectedItem.BirthDate, Mode=OneWay}"/>
+            <ComboBox x:Name="employeesGender_TextBox" 
+                      SelectedItem="{Binding ElementName=employees_DataGrid, Path=SelectedItem.Genders, Mode=OneWay}"
+                      ItemsSource="{Binding Source={StaticResource dataFromEnum}}" Width="200" Height="25" Margin="5"/>
+            <ComboBox x:Name="employeesSubRef_TextBox"
+                      SelectedItem="{Binding ElementName=employees_DataGrid, Path=SelectedItem.Subdivision, Mode=OneWay}"
+                      ItemsSource="{Binding PublicSubdivisions}" DisplayMemberPath="Name"
+                      Width="200" Margin="5">
+            </ComboBox>
+
+            <DockPanel>
+                <Button Content="Add" Margin="5" DockPanel.Dock="Left" MinWidth="100"
+                Command="{Binding AddCommandEmployee}">
+                    <Button.CommandParameter>
+                        <MultiBinding Converter="{StaticResource ParamsConverter}">
+                            <Binding ElementName="employeesID_TextBox" Path="Text"/>
+                            <Binding ElementName="employeesName_TextBox" Path="Text"/>
+                            <Binding ElementName="employeesLastName_TextBox" Path="Text"/>
+                            <Binding ElementName="employeesSecondName_TextBox" Path="Text"/>
+                            <Binding ElementName="employeesBirthDate_TextBox" Path="SelectedDate"/>
+                            <Binding ElementName="employeesGender_TextBox" Path="SelectedItem"/>
+                            <Binding ElementName="employeesSubRef_TextBox" Path="SelectedItem"/>
+                        </MultiBinding>
+                    </Button.CommandParameter>
+                </Button>
+                <Button Content="Remove" Margin="5"
+                Command="{Binding RemoveCommandEmployee}" DockPanel.Dock="Top">
+                    <Button.CommandParameter>
+                        <MultiBinding Converter="{StaticResource ParamsConverter}">
+                            <Binding ElementName="employees_DataGrid" Path="SelectedIndex"/>
+                            <Binding ElementName="employeesID_TextBox" Path="Text"/>
+                        </MultiBinding>
+                    </Button.CommandParameter>
+                </Button>
+                <Button Content="Change" Margin="5" DockPanel.Dock="Bottom"
+                Command="{Binding ChangeCommandEmployee}">
+                    <Button.CommandParameter>
+                        <MultiBinding Converter="{StaticResource ParamsConverter}">
+                            <Binding ElementName="employees_DataGrid" Path="SelectedIndex"/>
+                            <Binding ElementName="employeesID_TextBox" Path="Text"/>
+                            <Binding ElementName="employeesName_TextBox" Path="Text"/>
+                            <Binding ElementName="employeesLastName_TextBox" Path="Text"/>
+                            <Binding ElementName="employeesSecondName_TextBox" Path="Text"/>
+                            <Binding ElementName="employeesBirthDate_TextBox" Path="SelectedDate"/>
+                            <Binding ElementName="employeesGender_TextBox" Path="SelectedItem"/>
+                            <Binding ElementName="employeesSubRef_TextBox" Path="SelectedItem"/>
+                        </MultiBinding>
+                    </Button.CommandParameter>
+                </Button>
+            </DockPanel>
+        </StackPanel>
+
+        <StackPanel Grid.Row="3" Grid.Column="1">
+            <TextBox x:Name="subdivisionID_TextBox" Text="{Binding ElementName=subdivisions_DataGrid, Path=SelectedItem.ID, Mode=OneWay}" Height="25" Width="100" Margin="5" IsReadOnly="True"/>
+            <TextBox x:Name="subdivisionName_TextBox" Text="{Binding ElementName=subdivisions_DataGrid, Path=SelectedItem.Name, Mode=OneWay}" Width="200" Height="25" Margin="5"/>
+            <ComboBox x:Name="subdivisionsEmpRef_TextBox" 
+                      SelectedItem="{Binding ElementName=subdivisions_DataGrid, Path=SelectedItem.Employee, Mode=OneWay}"
+                      ItemsSource="{Binding PublicEmployees}" DisplayMemberPath="LastName"
+                      Width="200" Margin="5"/>
+            <DockPanel>
+                <Button Content="Add" Margin="5" DockPanel.Dock="Left" MinWidth="100"
+                Command="{Binding AddCommandSubdivision}">
+                    <Button.CommandParameter>
+                        <MultiBinding Converter="{StaticResource ParamsConverter}">
+                            <Binding ElementName="subdivisionID_TextBox" Path="Text"/>
+                            <Binding ElementName="subdivisionName_TextBox" Path="Text"/>
+                            <Binding ElementName="subdivisionsEmpRef_TextBox" Path="SelectedItem"/>
+                        </MultiBinding>
+                    </Button.CommandParameter>
+                </Button>
+                <Button Content="Remove" Margin="5"
+                Command="{Binding RemoveCommandSubdivision}" DockPanel.Dock="Top">
+                    <Button.CommandParameter>
+                        <MultiBinding Converter="{StaticResource ParamsConverter}">
+                            <Binding ElementName="subdivisions_DataGrid" Path="SelectedIndex"/>
+                            <Binding ElementName="subdivisionID_TextBox" Path="Text"/>
+                        </MultiBinding>
+                    </Button.CommandParameter>
+                </Button>
+                <Button Content="Change" Margin="5" DockPanel.Dock="Bottom"
+                Command="{Binding ChangeCommandSubdivision}">
+                    <Button.CommandParameter>
+                        <MultiBinding Converter="{StaticResource ParamsConverter}">
+                            <Binding ElementName="subdivisions_DataGrid" Path="SelectedIndex"/>
+                            <Binding ElementName="subdivisionID_TextBox" Path="Text"/>
+                            <Binding ElementName="subdivisionName_TextBox" Path="Text"/>
+                            <Binding ElementName="subdivisionsEmpRef_TextBox" Path="SelectedItem"/>
+                        </MultiBinding>
+                    </Button.CommandParameter>
+                </Button>
+            </DockPanel>
+        </StackPanel>
+
+    </Grid>
+</Window>
